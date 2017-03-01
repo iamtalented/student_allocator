@@ -12,6 +12,7 @@ CHOICE_COL = "L"
 CONSENT_COL = "P"
 SESSIONS = 3
 MAX_SIZE = 7
+MIN_TO_START = 12
 
 def load_students():
     workbook = load_workbook(FILENAME)
@@ -60,7 +61,8 @@ def load_students():
     return signups, choices
 
 def filter_demand(demand, cutoff):
-    new_demand = sorted([(k,v) for k,v in demand.iteritems() if v > cutoff], key=lambda(k,v): v)
+    books = ["Law / Legal", "Government: Infrastructure and Environment", "Social Entrepreneurship", "Creatives: Media and Strategic Planning", "Management Consulting", "Creatives: Advertising and Communications", "Healthcare: Medical", "Government: Social", "Technology: Big Data, Software Development, Systems, Engineering", "Human Resources", "Finance: Investment Banking and Management"]
+    new_demand = sorted([(k,v) for k,v in demand.iteritems() if k in books], key=lambda(k,v): v)
     return [x for x, y in new_demand]
 
 def sort_students(signups, filtered_demand):
@@ -89,7 +91,6 @@ def sort_students(signups, filtered_demand):
     filtered_demand = []
     for i in range(SESSIONS):
         filtered_demand.append(filter_demand(session_counts[i], -1))
-    print filtered_demand
     for signup in incomplete_signups:
         for j in range(SESSIONS):
             if ("session" + str(j + 1)) not in signup:
@@ -100,14 +101,33 @@ def sort_students(signups, filtered_demand):
                         session_counts[j][choice] += 1
                         break
         assigned_list.append(signup)
-    pprint.pprint(session_counts)
     return assigned_list
+
+def export_books(readers, filename):
+    readers = sorted(readers, key=lambda(d): d['name'])
+    wb = Workbook()
+    cur_row = 1
+    cur_sheet = wb.active
+    cur_sheet["A1"] = "Name"
+    cur_sheet["B1"] = "Book 1"
+    cur_sheet["C1"] = "Book 2"
+    cur_sheet["D1"] = "Book 3"
+    cur_row += 1
+    for reader in readers:
+        cur_sheet["A" + str(cur_row)] = reader["name"]
+        cur_sheet["B" + str(cur_row)] = reader["session1"]
+        cur_sheet["C" + str(cur_row)] = reader["session2"]
+        cur_sheet["D" + str(cur_row)] = reader["session3"]
+        cur_row += 1
+    wb.save(filename)
+
 
 if __name__ == "__main__":
     students, counts = load_students()
-    filtered_demand = filter_demand(counts, 15)
+    filtered_demand = filter_demand(counts, MIN_TO_START)
     assigned_list = sort_students(students, filtered_demand)
     for signup in assigned_list:
         if len(signup["assigned"]) < SESSIONS:
             print signup
+    export_books(assigned_list, "collaborate_particpants.xlsx")
 
