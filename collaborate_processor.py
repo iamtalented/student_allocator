@@ -38,7 +38,7 @@ def load_students():
             cur_row += 1
             if sheet[NAME_COL[0] + str(cur_row + 1)].value is None:
                 finished = True
-            if new_signup["consent"] != "Yes" or new_signup["email"] in emails:
+            if new_signup["email"] in emails:
                 continue
             emails.append(new_signup["email"])
             to_remove = []
