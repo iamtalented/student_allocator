@@ -31,6 +31,9 @@ def load_students():
         finished = False
         sheet = workbook[school]
         while not finished:
+            if sheet[NAME_COL[0] + str(cur_row)].value is None:
+                finished = True
+                continue
             cur_row_str = str(cur_row)
             new_student = {
                 "name": sheet[NAME_COL + cur_row_str].value.strip(),
@@ -54,8 +57,6 @@ def load_students():
                 no_class_count += 1
             else:
                 signups.append(new_student)
-            if sheet[NAME_COL[0] + str(cur_row + 1)].value is None:
-                finished = True
     print "no class count: " + str(no_class_count)
     return signups, classes
 
@@ -74,6 +75,7 @@ def sort_students(signups, demand, capacity):
     assigned_list = []
     session_counts = []
     incomplete_signups = []
+    new_incomplete_signups = []
     for i in range(SESSIONS):
         session_counts.append({})
     for signup in signups:
@@ -82,7 +84,7 @@ def sort_students(signups, demand, capacity):
             for selection in demand:
                 if selection not in session_counts[j]:
                     session_counts[j] = BASE_COUNT_TEMPLATE.copy()
-                if selection in signup["choices"] and session_counts[j][selection] < math.floor(CLASS_SIZES[selection] * capacity):
+                if selection in signup["choices"] and session_counts[j][selection] < math.floor(CLASS_SIZES[selection] * capacity) / 2:
                     signup["session" + str(j + 1)] = selection
                     signup["assigned"].append(selection)
                     signup["choices"].remove(selection)
@@ -93,11 +95,10 @@ def sort_students(signups, demand, capacity):
             incomplete_signups.append(signup)
         else:
             assigned_list.append(signup)
-    filtered_demand = []
-    for i in range(SESSIONS):
-        filtered_demand.append(filter_demand(session_counts[i]))
     for signup in incomplete_signups:
+        filtered_demand = []
         for j in range(SESSIONS):
+            filtered_demand.append(filter_demand(session_counts[j]))
             if ("session" + str(j + 1)) not in signup:
                 for choice in filtered_demand[j]:
                     if choice in signup["choices"] and session_counts[j][choice] < CLASS_SIZES[choice]:
@@ -106,7 +107,11 @@ def sort_students(signups, demand, capacity):
                         signup["choices"].remove(choice)
                         session_counts[j][choice] += 1
                         break
-        assigned_list.append(signup)
+        if len(signup["assigned"]) < SESSIONS:
+            new_incomplete_signups.append(signup)
+        else:
+            assigned_list.append(signup)
+    pprint.pprint(new_incomplete_signups)
     pprint.pprint(session_counts)
     return assigned_list
 
@@ -136,7 +141,6 @@ if __name__ == "__main__":
     students, counts = load_students()
     capacity = get_capacity(students, CLASS_SIZES)
     demand = filter_demand(counts)
-    print demand
     final_list = sort_students(students, demand, capacity)
     export_list(final_list, "temp.xlsx")
 
