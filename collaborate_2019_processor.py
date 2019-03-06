@@ -12,8 +12,8 @@ CHOICE_COL = "L"
 CONSENT_COL = "P"
 SESSIONS = 3
 MAX_SIZE = 7
-MIN_TO_START = 12
-BOOKS = ["Accounting","Banking (Consumer / Investment)","Computing / Technology","Education","Engineering","Government (Central Admin)","Government (Economic)","Government (HR)","Government (Infrastructure)","Government (Social)","Healthcare (Allied)","Healthcare (Medical)","Journalism","Legal","Linguistics","Management Consulting","Social Enterprise","Social Work"]
+BOOKS = ["Accounting","Banking (Consumer / Investment)","Computing / Technology","Education","Engineering","Government (Central Admin)","Government (Economic)","Government (HR)","Government (Infrastructure)","Government (Social)","Healthcare (Allied)","Healthcare (Medical)","Journalism","Legal","Management Consulting","Social Enterprise","Social Work"]
+BASE_TEMPLATE_COUNT = {x: 0 for x in BOOKS}
 
 def load_students():
     workbook = load_workbook(FILENAME)
@@ -50,7 +50,7 @@ def load_students():
             signups.append(new_signup)
     return signups, choices
 
-def filter_demand(demand, cutoff):
+def sort_demand(demand):
     books = BOOKS
     new_demand = sorted([(k,v) for k,v in demand.items() if k in books], key=lambda demand_tuple: demand_tuple[1])
     return [x for x, y in new_demand]
@@ -60,13 +60,12 @@ def sort_students(signups, filtered_demand):
     session_counts = []
     incomplete_signups = []
     for i in range(SESSIONS):
-        session_counts.append({})
+        session_counts.append(BASE_TEMPLATE_COUNT.copy())
     for signup in signups:
         choice = 0
         for j in range(SESSIONS):
+            filtered_demand = sort_demand(session_counts[j])
             for selection in filtered_demand:
-                if selection not in session_counts[j]:
-                    session_counts[j][selection] = 0
                 if selection in signup["choices"] and session_counts[j][selection] < MAX_SIZE:
                     signup["session" + str(j + 1)] = selection
                     signup["assigned"].append(selection)
@@ -80,7 +79,7 @@ def sort_students(signups, filtered_demand):
             assigned_list.append(signup)
     filtered_demand = []
     for i in range(SESSIONS):
-        filtered_demand.append(filter_demand(session_counts[i], -1))
+        filtered_demand.append(sort_demand(session_counts[i]))
     for signup in incomplete_signups:
         for j in range(SESSIONS):
             if ("session" + str(j + 1)) not in signup:
@@ -91,6 +90,7 @@ def sort_students(signups, filtered_demand):
                         session_counts[j][choice] += 1
                         break
         assigned_list.append(signup)
+    print(session_counts)
     return assigned_list
 
 def export_books(readers, filename):
@@ -114,10 +114,11 @@ def export_books(readers, filename):
 
 if __name__ == "__main__":
     students, counts = load_students()
-    filtered_demand = filter_demand(counts, MIN_TO_START)
+    filtered_demand = sort_demand(counts)
     assigned_list = sort_students(students, filtered_demand)
     for signup in assigned_list:
         if len(signup["assigned"]) < SESSIONS:
             print(signup)
     export_books(assigned_list, "collaborate_particpants.xlsx")
+
 
