@@ -3,16 +3,15 @@ import pprint
 from openpyxl import load_workbook, Workbook
 
 FILENAME = "iat_central_taster_signups_2019.xlsx"
-SHEETNAME = "Reg Form - IAT2019"
-NAME_COL = "B"
-SCHOOL = "C7"
-CLASS_COL = "D"
+SHEETNAME = "Consolidated for Sorting"
+NAME_COL = "C"
+SCHOOL_COL = "B"
+CLASS_COL = "E"
 SESSIONS = 3
 CHOICES = 11
-TITLE_ROW = "21"
-FIRST_ROW = 23
-FIRST_CHOICE_COL = "G"
-MAX_SIZE = 20
+TITLE_ROW = "2"
+FIRST_ROW = 3
+FIRST_CHOICE_COL = "H"
 CLASS_SIZES = {
     'Dance': 25,
     'Digtal Illustration': 25,
@@ -21,9 +20,10 @@ CLASS_SIZES = {
     'Mobile Game Building': 25,
     'Photo-graphy': 25,
     'Public Speaking': 25,
-    'Robotics (Tabletop Gaming)': 35,
+    'Robotics (Tabletop Gaming)': 30,
     'Song-writing': 25
 }
+
 BASE_COUNT_TEMPLATE = {x: 0 for x in CLASS_SIZES}
 
 def load_students():
@@ -38,7 +38,7 @@ def load_students():
         cur_row_str = str(cur_row)
         new_student = {
             "name": sheet[NAME_COL + cur_row_str].value.strip(),
-            "school": "nil" if sheet[SCHOOL].value == None else sheet[SCHOOL].value,
+            "school": sheet[SCHOOL_COL + cur_row_str].value.strip(),
             "class": sheet[CLASS_COL + cur_row_str].value,
             "choices": [],
             "assigned": []
@@ -52,7 +52,7 @@ def load_students():
                 if class_selection in classes:
                     classes[class_selection] += 1
         if new_student['choices'] == []:
-            no_class_students.push(new_student)
+            no_class_students.append(new_student)
         else:
             signups.append(new_student)
         if sheet[NAME_COL[0] + str(cur_row + 1)].value is None:
@@ -63,7 +63,7 @@ def load_students():
 
 
 def sort_demand(demand):
-    new_demand = sorted(demand.items(), key=lambda demand_tuple: demand_tuple[1]/   CLASS_SIZES[demand_tuple[0]])
+    new_demand = sorted(demand.items(), key=lambda demand_tuple: float(demand_tuple[1])/   float(CLASS_SIZES[demand_tuple[0]]))
     return [x for x, y in new_demand]
 
 def sort_students(signups):
