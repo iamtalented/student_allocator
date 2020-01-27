@@ -12,8 +12,16 @@ FORM_COL_FIRST_CHOICE = 'G'
 FORM_COL_SECOND_CHOICE = 'H'
 FORM_ROW_FIRST_ROW = 2
 
-# Vars for allocation excel
-
+# Vars for masterlist excel
+MASTER_FILENAME = 'master.xlsx'
+MASTER_COL_NAME = 'A'
+MASTER_COL_SCHOOL = 'B'
+MASTER_COL_CLASS = 'C'
+MASTER_COL_STUDENT_ID = 'D'
+MASTER_COL_SESSION_ONE = 'E'
+MASTER_COL_SESSION_TWO = 'F'
+MASTER_COL_SESSION_THREE = 'G'
+MASTER_ROW_FIRST_ROW = 2
 
 # Vars for programme
 
@@ -63,11 +71,38 @@ load data from the class master list
     - session related data if students are restricted to their 3 sessions
 """
 def load_more_data(selections):
-    for selection in selections:
-        selections[selection]['name'] = "a"
-        selections[selection]['school'] = "a"
-        selections[selection]['class'] = "a"
-    return selections
+    workbook = load_workbook(MASTER_FILENAME)
+    sheet = workbook[SHEETNAME]
+    finished = False
+    submitted_students = selections.keys()
+    unregistered_students = []
+    cur_row = MASTER_ROW_FIRST_ROW
+    cur_row_str = str(cur_row)
+
+    while not finished:
+        cur_student_id = sheet[MASTER_COL_STUDENT_ID + cur_row_str].value.strip()
+        if cur_student_id in submitted_students:
+            submitted_students.remove(cur_student_id)
+            selections[cur_student_id]['name'] = sheet[MASTER_COL_NAME + cur_row_str].value.strip()
+            selections[cur_student_id]['class'] = sheet[MASTER_COL_CLASS + cur_row_str].value.strip()
+            selections[cur_student_id]['school'] = sheet[MASTER_COL_SCHOOL + cur_row_str].value.strip()
+            temp_sessions = {
+                "Session 1": sheet[MASTER_COL_SESSION_ONE + cur_row_str].value.strip(),
+                "Session 2": sheet[MASTER_COL_SESSION_TWO + cur_row_str].value.strip(),
+                "Session 3": sheet[MASTER_COL_SESSION_THREE + cur_row_str].value.strip()
+            }
+            selections[cur_student_id]['school']['first_choice'] = temp_sessions[selections[cur_student_id]['school']['first_choice']]
+            selections[cur_student_id]['school']['second_choice'] = temp_sessions[selections[cur_student_id]['school']['second_choice']]
+        else:
+            unregistered_students.append(cur_student_id)
+        
+        #preparation for next loading cycle
+        cur_row += 1
+        cur_row_str = str(cur_row)
+        if sheet[MASTER_COL_STUDENT_ID + cur_row_str].value == None:
+            finished = True
+
+    return selections, submitted_students, unregistered_students
 
 def allocate_class(selections):
     num_choices = 2
