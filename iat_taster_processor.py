@@ -56,10 +56,11 @@ def generate_priority_order(student, classes):
         demand_coefficient = (1.0*classes[_class]["demand"]/total_selections) * class_type_count
         score = signup_coefficient - demand_coefficient
         class_priority_scores.append((_class, score))
-        #pprint({"name": _class, "s1": signup_coefficient, "s2":demand_coefficient, "s3": score})
+        #print({"name": _class, "s1": signup_coefficient, "s2":demand_coefficient, "s3": score})
     class_priority_scores = sorted(class_priority_scores, key=lambda score: score[1])
     return [_class[0] for _class in class_priority_scores]
 
 if __name__ == '__main__':
     students = iat_2023_dal.load_students_tasters()
     class_list, unassigned = sort_students(students)
+    iat_2023_dal.export_student_tasters_to_excel(class_list)
