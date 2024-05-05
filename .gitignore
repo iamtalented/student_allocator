@@ -2,3 +2,6 @@
 venv
 *.xlsx
 __pycache__
+
+data/*
+output/*
