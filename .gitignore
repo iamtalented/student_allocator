@@ -4,4 +4,5 @@ venv
 __pycache__
 
 data/*.xlsx
+data/mapping.json
 output/*

@@ -8,6 +8,7 @@ CLASS_LIMITS_FILE = "./data/quota.json"
 MAX = 20
 SESSION_COUNT = 3
 STUDENT_CHOICES = 5
+STUDENT_MAPPING_FILE = "./data/mapping.json"
 
 def sort_students(signup_list):
     random.shuffle(signup_list)
@@ -33,6 +34,8 @@ def sort_students(signup_list):
                 unassigned = True
         if unassigned:
             unassigned_students.append(student)
+    print("Unassigned Students")
+    print(unassigned)
     return signup_list, unassigned_students
 
             
@@ -55,8 +58,6 @@ def generate_class_demand(signup_list):
 
 def generate_priority_order(student, classes):
     class_priority_scores = []
-    class_type_count = len(classes)
-    total_selections = sum([classes[_class]["demand"] for _class in classes])
     to_fill = 0
     if len(student["choices"]) < STUDENT_CHOICES:
         to_fill = STUDENT_CHOICES - len(student["choices"])
@@ -67,7 +68,6 @@ def generate_priority_order(student, classes):
         #print(class_signup_counts)
         for i in range(to_fill):
             student["choices"].append(class_signup_counts[i][0])
-            print(class_signup_counts[i][0])
             classes[class_signup_counts[i][0]]["demand"] += 1
     for _class in student["choices"]:
         max = classes[_class]["max"]
@@ -75,12 +75,20 @@ def generate_priority_order(student, classes):
         demand_coefficient = (1.0*classes[_class]["demand"]/(3*classes[_class]["max"]))
         score =  demand_coefficient - signup_coefficient
         class_priority_scores.append((_class, score))
-        print({"name": _class, "s1": signup_coefficient, "s2":demand_coefficient, "s3": score})
+        #print({"name": _class, "s1": signup_coefficient, "s2":demand_coefficient, "s3": score})
     class_priority_scores = sorted(class_priority_scores, key=lambda score: -score[1])
-    print(class_priority_scores)
+    #print(class_priority_scores)
     return [_class[0] for _class in class_priority_scores]
+
+def generate_id_student_mapping(signup_list):
+    mapping = {}
+    for student in signup_list:
+        mapping[student["id"]] = [student["name"], student["school"]]
+    with open(STUDENT_MAPPING_FILE, "w") as mapping_json:
+        json.dump(mapping, mapping_json, indent=4, sort_keys=True)
 
 if __name__ == '__main__':
     students = iat_2023_dal.load_students_tasters()
     class_list, unassigned = sort_students(students)
+    id_student_list = generate_id_student_mapping(class_list)
     iat_2023_dal.export_student_tasters_to_excel(class_list)
