@@ -1,0 +1,32 @@
+{
+    "Augmented Reality (AR)": {
+        "max":20
+    },
+    "Anime Manga Comics Illustration": {
+        "max":30
+    },
+    "Cybersecurity": {
+        "max":20
+    },
+    "Entrepreneurship": {
+        "max":20
+    },
+    "Floral Arts": {
+        "max":15
+    },
+    "Mobile Game Building": {
+        "max":20
+    },
+    "Photography": {
+        "max":25
+    },
+    "Robotics": {
+        "max":20
+    },
+    "Songwriting": {
+        "max":20
+    },
+    "Street Dance": {
+        "max":20
+    }
+}

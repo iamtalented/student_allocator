@@ -1,8 +1,10 @@
 import iat_2023_dal
 
+import json
 from pprint import pprint
 import random
 
+CLASS_LIMITS_FILE = "./data/quota.json"
 MAX = 20
 SESSION_COUNT = 3
 STUDENT_CHOICES = 5
@@ -18,7 +20,7 @@ def sort_students(signup_list):
             session_id = "session"+str(i+1)
             assigned = False
             for _class in class_priority:
-                if classes[_class][session_id] >= MAX:
+                if classes[_class][session_id] >= classes[_class]["max"]:
                     continue
                 else:
                     student[session_id] = _class
@@ -36,18 +38,20 @@ def sort_students(signup_list):
             
 
 def generate_class_demand(signup_list):
-    classes = {}
-    for student in signup_list:
-        for choice in student["choices"]:
-            if choice in classes:
-                classes[choice]["demand"] += 1
-            else:
-                classes[choice] = {}
-                classes[choice]["demand"] = 1
-                classes[choice]["session1"] = 0
-                classes[choice]["session2"] = 0
-                classes[choice]["session3"] = 0
-    return classes
+    with open(CLASS_LIMITS_FILE) as classes_json_file:
+        classes = json.load(classes_json_file)
+        for _class in classes:
+            classes[_class]["demand"] = 0
+            classes[_class]["session1"] = 0
+            classes[_class]["session2"] = 0
+            classes[_class]["session3"] = 0
+        for student in signup_list:
+            for choice in student["choices"]:
+                if choice in classes and "demand" in classes[choice]:
+                    classes[choice]["demand"] += 1
+                else:
+                    raise(choice + " not in list of classes")
+        return classes
 
 def generate_priority_order(student, classes):
     class_priority_scores = []
@@ -66,12 +70,14 @@ def generate_priority_order(student, classes):
             print(class_signup_counts[i][0])
             classes[class_signup_counts[i][0]]["demand"] += 1
     for _class in student["choices"]:
-        signup_coefficient = (1.0*classes[_class]["session1"]/MAX + 1.0*classes[_class]["session2"]/MAX + 1.0*classes[_class]["session3"]/MAX) / 3
-        demand_coefficient = (1.0*classes[_class]["demand"]/total_selections) * class_type_count
-        score = signup_coefficient - demand_coefficient
+        max = classes[_class]["max"]
+        signup_coefficient = (1.0*classes[_class]["session1"]/max + 1.0*classes[_class]["session2"]/max + 1.0*classes[_class]["session3"]/max) / 3
+        demand_coefficient = (1.0*classes[_class]["demand"]/(3*classes[_class]["max"]))
+        score =  demand_coefficient - signup_coefficient
         class_priority_scores.append((_class, score))
-        #print({"name": _class, "s1": signup_coefficient, "s2":demand_coefficient, "s3": score, "cls": classes})
-    class_priority_scores = sorted(class_priority_scores, key=lambda score: score[1])
+        print({"name": _class, "s1": signup_coefficient, "s2":demand_coefficient, "s3": score})
+    class_priority_scores = sorted(class_priority_scores, key=lambda score: -score[1])
+    print(class_priority_scores)
     return [_class[0] for _class in class_priority_scores]
 
 if __name__ == '__main__':
