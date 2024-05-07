@@ -57,8 +57,6 @@ def load_students_from_excel_tasters(filename):
                 if sheet[new_col + cur_row_str].value:
                     class_selection = sheet[new_col + TITLE_ROW].value.replace("\n", " ")
                     new_student['choices'].append(class_selection)
-            if new_student['choices'] == []:
-                no_class_count += 1
             else:
                 signups.append(new_student)
 
@@ -72,9 +70,9 @@ def export_student_tasters_to_excel(students):
 
     class_list = generate_class_lists(students)
     for course in class_list:
-        course = str(course)
-        wb.create_sheet(course)
-        write_class_list_to_sheet(wb[course], class_list[course], course)
+        course_str = str(course)
+        wb.create_sheet(course_str)
+        write_class_list_to_sheet(wb[course_str], class_list[course], course_str)
     
     wb.save(OUTPUT_DIR + EXPORT_FILENAME)
     
@@ -118,6 +116,7 @@ def write_class_list_to_sheet(sheet, class_list, course_name):
     for i in range(SESSIONS):
         cur_session = "session" + str(i+1)
         sheet["A" + str(cur_row)] = "SESSION " + str(i+1)
+        sheet["B" + str(cur_row)] = len(class_list[cur_session])
         cur_row += 1
         for student, school, id in class_list[cur_session]:
             sheet["A" + str(cur_row)] = student

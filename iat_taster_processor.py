@@ -34,8 +34,8 @@ def sort_students(signup_list):
                 unassigned = True
         if unassigned:
             unassigned_students.append(student)
-    print("Unassigned Students")
-    print(unassigned)
+    #print("Unassigned Students")
+    #print(unassigned_students)
     return signup_list, unassigned_students
 
             
@@ -66,9 +66,12 @@ def generate_priority_order(student, classes):
             class_signup_counts.append([_class, classes[_class]["demand"]])
         class_signup_counts = sorted(class_signup_counts, key=lambda _class: _class[1])
         #print(class_signup_counts)
+        base_counter = 0
         for i in range(to_fill):
-            student["choices"].append(class_signup_counts[i][0])
-            classes[class_signup_counts[i][0]]["demand"] += 1
+            while class_signup_counts[base_counter + i][0] in student["choices"]:
+                base_counter += 1
+            student["choices"].append(class_signup_counts[base_counter + i][0])
+            classes[class_signup_counts[base_counter + i][0]]["demand"] += 1
     for _class in student["choices"]:
         max = classes[_class]["max"]
         signup_coefficient = (1.0*classes[_class]["session1"]/max + 1.0*classes[_class]["session2"]/max + 1.0*classes[_class]["session3"]/max) / 3
